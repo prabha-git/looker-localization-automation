@@ -2,6 +2,7 @@ import os
 import json
 import re
 from google.cloud import translate_v2 as translate
+from google.oauth2.service_account import Credentials
 from html import unescape
 
 # Define patterns for extracting fields and detecting hidden elements
@@ -16,8 +17,14 @@ output = {}
 # Define target languages
 languages = ['en', 'es']
 
+# Load credentials from the GOOGLE_APPLICATION_CREDENTIALS environment variable.
+credentials_info = json.loads(os.environ.get('GOOGLE_APPLICATION_CREDENTIALS'))
+
+# Create credentials
+credentials = Credentials.from_service_account_info(credentials_info)
+
 # Instantiate Google Cloud Translate API Client
-translate_client = translate.Client()
+translate_client = translate.Client(credentials=credentials)
 
 # Walk through each file in the current directory and its subdirectories recursively
 for root, dirs, files in os.walk("."):
@@ -41,27 +48,17 @@ for root, dirs, files in os.walk("."):
 
 # Translate and save results for each language
 for language in languages:
-    # Load existing translations if file exists
-    filename = f'{language}_strings.json'
-    if os.path.exists(filename):
-        with open(filename, 'r', encoding='utf-8') as f:
-            output_translated = json.load(f)
-    else:
-        output_translated = {}
-
-    # Update with new translations
+    output_translated = {}
     for key, value in output.items():
-        # Only translate and add new entries
-        if key not in output_translated:
-            if language == 'en':
-                output_translated[key] = value
-            else:
-                # Translate text using Google Cloud Translate API
-                translation = translate_client.translate(value, target_language=language)['translatedText']
-                # Unescape HTML characters
-                translation = unescape(translation)
-                output_translated[key] = translation
+        if language == 'en':
+            output_translated[key] = value
+        else:
+            # Translate text using Google Cloud Translate API
+            translation = translate_client.translate(value, target_language=language)['translatedText']
+            # Unescape HTML characters
+            translation = unescape(translation)
+            output_translated[key] = translation
 
     # Save results to '{language}.strings.json' in the root directory
-    with open(filename, 'w', encoding='utf-8') as f:
+    with open(f'{language}_strings.json', 'w', encoding='utf-8') as f:
         json.dump(output_translated, f, ensure_ascii=False, indent=2)
