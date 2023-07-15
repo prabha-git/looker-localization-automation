@@ -5,6 +5,13 @@ from google.cloud import translate_v2 as translate
 from google.oauth2.service_account import Credentials
 from html import unescape
 
+# Set the path of the Service Account key
+key_path = os.environ.get('GOOGLE_APPLICATION_CREDENTIALS')
+
+# Load the JSON key into a dictionary
+with open(key_path) as key_file:
+    key_dict = json.load(key_file)
+
 # Define patterns for extracting fields and detecting hidden elements
 field_pattern = re.compile(r'(dimension|measure|filter|parameter):\s*\w+\s*{([^}]*)}', re.DOTALL)
 hidden_pattern = re.compile(r'hidden:\s*yes', re.IGNORECASE)
@@ -17,14 +24,8 @@ output = {}
 # Define target languages
 languages = ['en', 'es']
 
-# Load credentials from the GOOGLE_APPLICATION_CREDENTIALS environment variable.
-credentials_info = json.loads(os.environ.get('GOOGLE_APPLICATION_CREDENTIALS'))
-
-# Create credentials
-credentials = Credentials.from_service_account_info(credentials_info)
-
-# Instantiate Google Cloud Translate API Client
-translate_client = translate.Client(credentials=credentials)
+# Create the Translate client using the key dictionary
+translate_client = translate.Client(credentials=key_dict)
 
 # Walk through each file in the current directory and its subdirectories recursively
 for root, dirs, files in os.walk("."):
