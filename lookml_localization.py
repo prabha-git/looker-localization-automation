@@ -91,5 +91,5 @@ for user_language in user_languages:
             output_translated[key] = translation
 
     # Save results to '{language}.string.json' in the specified directory
-    with open(os.path.join(lookml_root_folder, f'{user_language}.string.json'), 'w', encoding='utf-8') as f:
+    with open(os.path.join(lookml_root_folder, f'{user_language}.strings.json'), 'w', encoding='utf-8') as f:
         json.dump(output_translated, f, ensure_ascii=False, indent=2)
